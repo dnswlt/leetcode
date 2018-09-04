@@ -9,9 +9,11 @@ type TreeLinkNode struct {
 }
 
 func connect(t *TreeLinkNode) {
-	if t == nil {
+	if t == nil || t.Left == nil || t.Right == nil {
 		return
 	}
+	connect(t.Left)
+	connect(t.Right)
 	zip(t.Left, t.Right)
 }
 
@@ -20,7 +22,5 @@ func zip(left, right *TreeLinkNode) {
 		return
 	}
 	left.Next = right
-	connect(left)
-	connect(right)
 	zip(left.Right, right.Left)
 }

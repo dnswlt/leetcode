@@ -42,7 +42,6 @@ func TestConnect(t *testing.T) {
 func TestConnect2(t *testing.T) {
 	t1, _ := mktree(4, 1)
 	connect(t1)
-	printtree(t1)
 	if t1.Left.Next.Val != 9 {
 		t.Error("Not right", t1.Left.Next.Val)
 	}
