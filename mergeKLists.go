@@ -8,27 +8,22 @@ package leetcode
  * }
  */
 
-func minIndex(lists []*ListNode) int {
-	min := -1
-	for j := 0; j < len(lists); j++ {
-		if lists[j] != nil {
-			if min == -1 || lists[j].Val < lists[min].Val {
-				min = j
-			}
-		}
+func merge2Lists(l1 *ListNode, l2 *ListNode) *ListNode {
+	if l1 == nil {
+		return l2
 	}
-	return min
+	if l2 == nil {
+		return l1
+	}
+	if l1.Val < l2.Val {
+		return &ListNode{l1.Val, merge2Lists(l1.Next, l2)}
+	}
+	return &ListNode{l2.Val, merge2Lists(l1, l2.Next)}
 }
 
 func mergeKLists(lists []*ListNode) *ListNode {
 	if len(lists) == 0 {
 		return nil
 	}
-	i := minIndex(lists)
-	if i == -1 {
-		return nil
-	}
-	v := lists[i].Val
-	lists[i] = lists[i].Next
-	return &ListNode{v, mergeKLists(lists)}
+	return merge2Lists(lists[0], mergeKLists(lists[1:]))
 }
