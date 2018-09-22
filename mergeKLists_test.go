@@ -1,6 +1,9 @@
 package leetcode
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 func TestMergeKLists(t *testing.T) {
 	ls := toSlice(mergeKLists([]*ListNode{
@@ -8,5 +11,7 @@ func TestMergeKLists(t *testing.T) {
 		fromSlice([]int{2, 3, 4, 7, 7, 11}),
 		fromSlice([]int{}),
 	}))
-	t.Error(ls)
+	if fmt.Sprint(ls) != "[1 2 2 3 4 6 7 7 10 11]" {
+		t.Error("Baaad merge", ls)
+	}
 }

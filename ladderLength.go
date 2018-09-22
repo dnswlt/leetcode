@@ -39,7 +39,6 @@ func ladderLength(beginWord string, endWord string, wordList []string) int {
 		if wordList[s.i] == endWord {
 			return s.depth + 1
 		}
-
 		seen[s.i] = struct{}{}
 		succs := g[s.i]
 		for i := 0; i < len(succs); i++ {

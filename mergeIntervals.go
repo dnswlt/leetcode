@@ -20,6 +20,7 @@ func merge(intervals []Interval) []Interval {
 		return intervals[i].Start < intervals[j].Start || intervals[i].Start == intervals[j].Start && intervals[i].End < intervals[j].End
 	})
 	r := []Interval{}
+	
 	for _, ival := range intervals {
 		last := len(r) - 1
 		if last < 0 || r[last].End < ival.Start {
