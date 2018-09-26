@@ -10,22 +10,20 @@ func combinationSum(nums []int, sum int) [][]int {
 	}
 	r := [][]int{}
 	buf := []int{}
-	combinationSumBT(nums, sum, 0, &buf, &r)
+	combinationSumBT(nums, sum, 0, buf, &r)
 	return r
 }
 
-func combinationSumBT(nums []int, sum int, i int, buf *[]int, r *[][]int) {
+func combinationSumBT(nums []int, sum int, i int, buf []int, r *[][]int) {
 	if sum == 0 {
-		sol := make([]int, len(*buf))
-		copy(sol, *buf)
+		sol := make([]int, len(buf))
+		copy(sol, buf)
 		*r = append(*r, sol)
 		return
 	}
 	for j := i; j < len(nums); j++ {
 		if nums[j] <= sum {
-			*buf = append(*buf, nums[j])
-			combinationSumBT(nums, sum-nums[j], j, buf, r)
-			*buf = (*buf)[:len(*buf)-1]
+			combinationSumBT(nums, sum-nums[j], j, append(buf, nums[j]), r)
 		}
 	}
 }
