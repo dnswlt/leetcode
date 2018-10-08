@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -49,20 +50,23 @@ func serve() {
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
-func request(n int) {
-	tr := &http.Transport{
-		IdleConnTimeout: 30 * time.Second,
-	}
-	client := &http.Client{Transport: tr}
-	resp, err := client.Get("http://192.168.99.144:8080/reset")
+func reset(host string, port int) {
+	resp, err := http.Get(fmt.Sprintf("http://%s:%d/reset", host, port))
 	if err != nil {
 		fmt.Print("Cannot reset: ", err)
 		return
 	}
 	ioutil.ReadAll(resp.Body)
 	resp.Body.Close()
+}
+
+func request(n int, host string, port int) {
+	tr := &http.Transport{
+		IdleConnTimeout: 30 * time.Second,
+	}
+	client := &http.Client{Transport: tr}
 	for i := 0; i < n; i++ {
-		resp, err = client.Get("http://192.168.99.144:8080/ping")
+		resp, err := client.Get(fmt.Sprintf("http://%s:%d/ping", host, port))
 		if err != nil {
 			fmt.Print("Cannot ping: ", err)
 			return
@@ -75,10 +79,22 @@ func request(n int) {
 func main() {
 	if len(os.Args) == 2 && os.Args[1] == "server" {
 		serve()
-	} else if len(os.Args) == 3 && os.Args[1] == "client" {
-		n, _ := strconv.Atoi(os.Args[2])
-		request(n)
+	} else if len(os.Args) == 6 && os.Args[1] == "client" {
+		host := os.Args[2]
+		port, _ := strconv.Atoi(os.Args[3])
+		numClients, _ := strconv.Atoi(os.Args[4])
+		numRequests, _ := strconv.Atoi(os.Args[5])
+		reset(host, port)
+		var wg sync.WaitGroup
+		wg.Add(numClients)
+		for i := 0; i < numClients; i++ {
+			go func() {
+				defer wg.Done()
+				request(numRequests, host, port)
+			}()
+		}
+		wg.Wait()
 	} else {
-		fmt.Printf("Usage: %s <server|client N>\n", os.Args[0])
+		fmt.Printf("Usage: %s <server|client host port num-clients num-requests>\n", os.Args[0])
 	}
 }
