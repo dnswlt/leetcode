@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
 	"strconv"
@@ -47,11 +49,20 @@ func serve() {
 		fmt.Fprint(w, "pong")
 		countChan <- 1
 	})
+	http.HandleFunc("/data", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "POST" {
+			ioutil.ReadAll(r.Body)
+			fmt.Fprint(w, `{"status": "OK"}`)
+			countChan <- 1
+		} else {
+			fmt.Printf("Invalid method %s\n", r.Method)
+		}
+	})
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
 func reset(host string, port int) {
-	resp, err := http.Get(fmt.Sprintf("http://%s:%d/reset", host, port))
+	resp, err := http.Post(fmt.Sprintf("http://%s:%d/reset", host, port), "application/json", nil)
 	if err != nil {
 		fmt.Print("Cannot reset: ", err)
 		return
@@ -76,6 +87,38 @@ func request(n int, host string, port int) {
 	}
 }
 
+func uuid4() string {
+	b := make([]byte, 16)
+	rand.Read(b)
+	return fmt.Sprintf("%X-%X-%X-%X-%X", b[0:4], b[4:6], b[6:8], b[8:10], b[10:])
+}
+
+func randString(n int) string {
+	buf := make([]byte, n)
+	for i := 0; i < n; i++ {
+		buf[i] = byte('a') + byte(rand.Intn(26))
+	}
+	return string(buf)
+}
+
+func send(n int, host string, port int) {
+	tr := &http.Transport{
+		IdleConnTimeout: 30 * time.Second,
+	}
+	client := &http.Client{Transport: tr}
+
+	data := fmt.Sprintf(`{"id": "%s", "payload": "%s"}`, uuid4(), randString(512))
+	for i := 0; i < n; i++ {
+		resp, err := client.Post(fmt.Sprintf("http://%s:%d/data", host, port), "application/json", bytes.NewBufferString(data))
+		if err != nil {
+			fmt.Print("Cannot ping: ", err)
+			return
+		}
+		ioutil.ReadAll(resp.Body)
+		resp.Body.Close()
+	}
+}
+
 func main() {
 	if len(os.Args) == 2 && os.Args[1] == "server" {
 		serve()
@@ -90,7 +133,7 @@ func main() {
 		for i := 0; i < numClients; i++ {
 			go func() {
 				defer wg.Done()
-				request(numRequests, host, port)
+				send(numRequests, host, port)
 			}()
 		}
 		wg.Wait()
